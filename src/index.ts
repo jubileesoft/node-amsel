@@ -1,14 +1,50 @@
 import express from 'express';
 import routes from './routes';
+const { ApolloServer } = require('apollo-server-express');
+import amsel, { GoogleConfig } from '@jubileesoft/amsel';
+import typeDefs from './graphql/type-defs';
 
 const port = process.env.PORT || 3000;
 const app = express();
+
+// #region ROUTES
 
 routes(app);
 
 app.get('/', function (req, res) {
   res.send('Hello World!');
 });
+
+// #endregion ROUTES
+
+// #region GRAPHQL
+
+// const amselConfig: GoogleConfig = {
+//   appClientId: '',
+// };
+// amsel.initializeGoogle(amselConfig);
+
+const server = new ApolloServer({
+  playground: true,
+  typeDefs,
+  //resolvers,
+  // context: async (input): Promise<object> => {
+  //   const notAuthenticated = { user: null };
+  //   try {
+  //     const user = await amsel.verifyAccessTokenFromGoogle(input.req.headers.authorization);
+  //     return { user };
+  //   } catch (e) {
+  //     return notAuthenticated;
+  //   }
+  // },
+  // dataSources: (): object => {
+  //   return { mongoApi: null };
+  // },
+});
+
+server.applyMiddleware({ app });
+
+// #endregion GRAPHQL
 
 // Start the server
 app.listen(port, () => {
