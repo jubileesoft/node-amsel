@@ -6,6 +6,7 @@ import express from 'express';
 import routes from './routes';
 
 import GenericApi from './datasources/generic-api';
+import MongoDbStorage from './datasources/mongodb-storage';
 import resolvers from './graphql/resolvers';
 import typeDefs from './graphql/type-defs';
 
@@ -43,7 +44,7 @@ const server = new ApolloServer({
   //   }
   // },
   dataSources: (): object => {
-    return { genericApi: new GenericApi() };
+    return { genericApi: new GenericApi(new MongoDbStorage()) };
   },
 });
 

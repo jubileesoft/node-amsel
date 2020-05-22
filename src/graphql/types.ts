@@ -13,5 +13,5 @@ export interface User {
 export interface App {
   id: string;
   name: string;
-  owner: User;
+  owner?: User;
 }

@@ -6,7 +6,7 @@ const typeDefs = gql`
     id: ID!
     owner: User!
     name: String!
-  }^
+  }
 
   extend type Query {
     getAllApps: [App]

@@ -7,12 +7,9 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Launch Program",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "program": "${workspaceFolder}\\dist\\index.js",
-      "preLaunchTask": "tsc: build - tsconfig.json",
+      "name": "Linux: Launch Program",
+      "program": "${workspaceFolder}/dist/index.js",
+      "preLaunchTask": "tsc: watch - tsconfig.json",
       "outFiles": [
         "${workspaceFolder}/dist/**/*.js"
       ]

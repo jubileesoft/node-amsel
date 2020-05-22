@@ -3,7 +3,7 @@ import { AuthenticationError, ApolloError } from 'apollo-server-express';
 import { MicrosoftUser } from '@jubileesoft/amsel';
 import GenericApi from '../datasources/generic-api';
 import { Collection } from './types';
-import {App} from './types';
+import { App, User } from './types';
 
 interface ApolloServerContext {
   user: MicrosoftUser;
@@ -11,6 +11,7 @@ interface ApolloServerContext {
 }
 
 const ensureIsAuthenticated = (context: ApolloServerContext) => {
+  return;
   if (!context.user) {
     throw new AuthenticationError('Unauthenticated.');
   }
@@ -18,9 +19,16 @@ const ensureIsAuthenticated = (context: ApolloServerContext) => {
 
 const resolvers: IResolvers = {
   Query: {
-    getAllApps: async (_, __, context: ApolloServerContext, ____) => {
+    getAllApps: async (_, __, context: ApolloServerContext, ____): Promise<App[] | null> => {
       ensureIsAuthenticated(context);
-      const asd: App[] | null = await context.dataSources.genericApi.getCollection(Collection.apps);
+      const apps: App[] | null = await context.dataSources.genericApi.getCollection(Collection.apps);
+      return apps;
+    },
+  },
+  App: {
+    async owner(app: App, __, context: ApolloServerContext, ____): Promise<User | null> {
+      const user: User | null = await context.dataSources.genericApi.getOwner(app.id);
+      return user;
     },
   },
 };
