@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { gql } = require('apollo-server-express');
 
 import appTypeDefs from './schema/app';

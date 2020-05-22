@@ -1,7 +1,12 @@
-import express from 'express';
-import routes from './routes';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { ApolloServer } = require('apollo-server-express');
-import amsel, { GoogleConfig } from '@jubileesoft/amsel';
+import amsel, { MicrosoftConfig } from '@jubileesoft/amsel';
+import express from 'express';
+
+import routes from './routes';
+
+import GenericApi from './datasources/generic-api';
+import resolvers from './graphql/resolvers';
 import typeDefs from './graphql/type-defs';
 
 const port = process.env.PORT || 3000;
@@ -27,7 +32,7 @@ app.get('/', function (req, res) {
 const server = new ApolloServer({
   playground: true,
   typeDefs,
-  //resolvers,
+  resolvers,
   // context: async (input): Promise<object> => {
   //   const notAuthenticated = { user: null };
   //   try {
@@ -37,9 +42,9 @@ const server = new ApolloServer({
   //     return notAuthenticated;
   //   }
   // },
-  // dataSources: (): object => {
-  //   return { mongoApi: null };
-  // },
+  dataSources: (): object => {
+    return { genericApi: new GenericApi() };
+  },
 });
 
 server.applyMiddleware({ app });
