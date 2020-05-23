@@ -14,7 +14,8 @@ export default class MongoDbStorage implements Storage {
 
   // #region Interface Methods
 
-  public async getCollection(collection: Collection, filter?: object): Promise<any[] | null> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public async getDocuments(collection: Collection, filter?: object): Promise<any[] | null> {
     const col = collectionMap.get(collection);
     if (!col) {
       return null;
@@ -25,31 +26,43 @@ export default class MongoDbStorage implements Storage {
       client = await this.getClient();
 
       const db = client.db(this.config.database);
-      const appDocs = await db
+      const docs = await db
         .collection(col)
         .find(filter ?? {})
         .toArray();
 
+      return docs;
+    } catch (error) {
+      return null;
+    } finally {
+      client?.close();
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public async getDocument(collection: Collection, filter: any): Promise<any | null> {
+    const col = collectionMap.get(collection);
+    if (!col) {
+      return null;
+    }
+
+    let client: mongo.MongoClient | undefined;
+    try {
+      client = await this.getClient();
+
+      const db = client.db(this.config.database);
+      const doc = await db.collection(col).findOne(filter);
+
+      if (!doc) {
+        return null;
+      }
+
       switch (collection) {
         case Collection.apps:
-          const apps: App[] = (appDocs as AppDoc[]).map((appDoc) => {
-            return {
-              id: appDoc._id.toString(),
-              name: appDoc.name,
-            };
-          });
-          return apps;
+          return this.mapAppDoc(doc);
 
         case Collection.users:
-          const users: User[] = (appDocs as UserDoc[]).map((userDoc) => {
-            return {
-              id: userDoc._id.toString(),
-              offId: userDoc.offId,
-              email: userDoc.email,
-              tags: userDoc.tags,
-            };
-          });
-          return users;
+          return this.mapUserDoc(doc);
 
         default:
           return null;
@@ -61,6 +74,57 @@ export default class MongoDbStorage implements Storage {
     }
   }
 
+  public mapAppDoc(doc: AppDoc): App {
+    return this.mapAppDocToGql(doc);
+  }
+
+  public mapAppDocs(docs: AppDoc[]): App[] {
+    const apps: App[] = docs.map((doc) => {
+      return this.mapAppDocToGql(doc);
+    });
+    return apps;
+  }
+
+  public mapUserDoc(doc: UserDoc): User {
+    return this.mapUserDocToGql(doc);
+  }
+
+  public mapUserDocs(docs: UserDoc[]): User[] {
+    const users: User[] = docs.map((doc) => {
+      return this.mapUserDocToGql(doc);
+    });
+    return users;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public mapDocs(collection: Collection, docs: any[]): any[] | null {
+    switch (collection) {
+      case Collection.apps:
+        return this.mapAppDocs(docs);
+
+      case Collection.users:
+        return this.mapUserDocs(docs);
+
+      default:
+        return null;
+    }
+  }
+
+  public async getOwner(appId: string): Promise<User | null> {
+    //
+    const appDoc: AppDoc = await this.getDocument(Collection.apps, { _id: appId });
+    if (!appDoc) {
+      return null;
+    }
+
+    const userDoc: UserDoc = await this.getDocument(Collection.users, { _id: appDoc.ownerId });
+    if (!userDoc) {
+      return null;
+    }
+
+    return this.mapUserDoc(userDoc);
+  }
+
   // #endregion Interface Methods
 
   // #region Private Methods
@@ -69,6 +133,22 @@ export default class MongoDbStorage implements Storage {
     return mongo.MongoClient.connect(this.config.url, {
       useUnifiedTopology: true,
     });
+  }
+
+  private mapAppDocToGql(doc: AppDoc): App {
+    return {
+      id: doc._id.toString(),
+      name: doc.name,
+    };
+  }
+
+  private mapUserDocToGql(doc: UserDoc): User {
+    return {
+      id: doc._id.toString(),
+      offId: doc.offId,
+      email: doc.email,
+      tags: doc.tags,
+    };
   }
 
   // #endregion Private Methods

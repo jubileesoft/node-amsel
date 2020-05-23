@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { ApolloServer } = require('apollo-server-express');
-import amsel, { MicrosoftConfig } from '@jubileesoft/amsel';
+//import amsel, { MicrosoftConfig } from '@jubileesoft/amsel';
 import express from 'express';
 
 import routes from './routes';
