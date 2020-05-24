@@ -11,6 +11,15 @@ const typeDefs = gql`
   extend type Query {
     getAllApps: [App]
   }
+
+  input AddAppInput {
+    name: String!
+    ownerOffId: String!
+  }
+
+  extend type Mutation {
+    addApp(input: AddAppInput!): App
+  }
 `;
 
 export default typeDefs;

@@ -1,13 +1,14 @@
 import mongo from 'mongodb';
-import { Collection } from '../graphql/types';
+import { Collection, Privilege } from '../graphql/types';
 import { MongoDBConfig } from './mongodb/config';
-import { AppDoc, UserDoc } from './mongodb/docs';
-import { App, User } from '../graphql/types';
+import { AppDoc, UserDoc, PrivilegeDoc } from './mongodb/docs';
+import { App, User, AddUserInput, AddAppInput, AddPrivilegeInput } from '../graphql/types';
 import Storage from './storage';
 
 const collectionMap = new Map<Collection, string>();
 collectionMap.set(Collection.apps, 'apps');
 collectionMap.set(Collection.users, 'users');
+collectionMap.set(Collection.privileges, 'privileges');
 
 export default class MongoDbStorage implements Storage {
   private config = MongoDBConfig;
@@ -52,21 +53,7 @@ export default class MongoDbStorage implements Storage {
 
       const db = client.db(this.config.database);
       const doc = await db.collection(col).findOne(filter);
-
-      if (!doc) {
-        return null;
-      }
-
-      switch (collection) {
-        case Collection.apps:
-          return this.mapAppDoc(doc);
-
-        case Collection.users:
-          return this.mapUserDoc(doc);
-
-        default:
-          return null;
-      }
+      return doc;
     } catch (error) {
       return null;
     } finally {
@@ -96,6 +83,17 @@ export default class MongoDbStorage implements Storage {
     return users;
   }
 
+  public mapPrivilegeDoc(doc: PrivilegeDoc): Privilege {
+    return this.mapPrivilegeDocToGql(doc);
+  }
+
+  public mapPrivilegeDocs(docs: PrivilegeDoc[]): Privilege[] {
+    const privileges: Privilege[] = docs.map((doc) => {
+      return this.mapPrivilegeDocToGql(doc);
+    });
+    return privileges;
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public mapDocs(collection: Collection, docs: any[]): any[] | null {
     switch (collection) {
@@ -110,19 +108,125 @@ export default class MongoDbStorage implements Storage {
     }
   }
 
-  public async getOwner(appId: string): Promise<User | null> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public async getOwner(appId: string): Promise<any | null> {
     //
-    const appDoc: AppDoc = await this.getDocument(Collection.apps, { _id: appId });
+    const appDoc: AppDoc = await this.getDocument(Collection.apps, { _id: new mongo.ObjectID(appId) });
     if (!appDoc) {
       return null;
     }
 
-    const userDoc: UserDoc = await this.getDocument(Collection.users, { _id: appDoc.ownerId });
-    if (!userDoc) {
+    const userDoc: UserDoc = await this.getDocument(Collection.users, { _id: new mongo.ObjectID(appDoc.owner_id) });
+    return userDoc;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public async addUser(input: AddUserInput): Promise<any | null> {
+    const col = collectionMap.get(Collection.users);
+    if (!col) {
       return null;
     }
 
-    return this.mapUserDoc(userDoc);
+    let client: mongo.MongoClient | undefined;
+    try {
+      client = await this.getClient();
+
+      const db = client.db(this.config.database);
+
+      const user = await db.collection(col).findOne({ offId: input.offId });
+      if (user) {
+        // A user with the same offId already exists. Just return this one.
+        return user;
+      }
+
+      const newUser: UserDoc = {
+        _id: new mongo.ObjectID(),
+        email: input.email,
+        offId: input.offId,
+        tags: input.tags,
+      };
+
+      await db.collection(col).insertOne(newUser);
+      return newUser;
+    } catch (error) {
+      return null;
+    } finally {
+      client?.close();
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public async addApp(input: AddAppInput): Promise<any | null> {
+    const appsCollection = collectionMap.get(Collection.apps);
+    const usersCollection = collectionMap.get(Collection.users);
+    if (!appsCollection || !usersCollection) {
+      return null;
+    }
+
+    let client: mongo.MongoClient | undefined;
+    try {
+      client = await this.getClient();
+
+      const db = client.db(this.config.database);
+
+      // Get intended owner first
+      const ownerDoc: UserDoc | null = await db.collection(usersCollection).findOne({ offId: input.ownerOffId });
+      if (!ownerDoc) {
+        return null;
+      }
+
+      const newApp: AppDoc = {
+        _id: new mongo.ObjectID(),
+        // eslint-disable-next-line @typescript-eslint/camelcase
+        owner_id: ownerDoc._id,
+        name: input.name,
+      };
+      await db.collection(appsCollection).insertOne(newApp);
+      return newApp;
+    } catch (error) {
+      return null;
+    } finally {
+      client?.close();
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public async addPrivilege(input: AddPrivilegeInput): Promise<any | null> {
+    const appsCollection = collectionMap.get(Collection.apps);
+    const privilegesCollection = collectionMap.get(Collection.privileges);
+    if (!appsCollection || !privilegesCollection) {
+      return null;
+    }
+
+    let client: mongo.MongoClient | undefined;
+    try {
+      client = await this.getClient();
+
+      const db = client.db(this.config.database);
+
+      // Get app
+      const appDoc: AppDoc | null = await db
+        .collection(appsCollection)
+        .findOne({ _id: new mongo.ObjectID(input.appId) });
+      if (!appDoc) {
+        return null;
+      }
+
+      const newDoc: PrivilegeDoc = {
+        _id: new mongo.ObjectID(),
+        // eslint-disable-next-line @typescript-eslint/camelcase
+        app_id: appDoc._id,
+        name: input.name,
+        short: input.short,
+        tags: input.tags,
+      };
+      await db.collection(privilegesCollection).insertOne(newDoc);
+      return newDoc;
+    } catch (error) {
+      return null;
+    } finally {
+      client?.close();
+    }
   }
 
   // #endregion Interface Methods
@@ -147,6 +251,16 @@ export default class MongoDbStorage implements Storage {
       id: doc._id.toString(),
       offId: doc.offId,
       email: doc.email,
+      tags: doc.tags,
+    };
+  }
+
+  private mapPrivilegeDocToGql(doc: PrivilegeDoc): Privilege {
+    return {
+      id: doc._id.toString(),
+      appId: doc.app_id.toString(),
+      name: doc.name,
+      short: doc.short,
       tags: doc.tags,
     };
   }

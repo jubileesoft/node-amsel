@@ -8,6 +8,16 @@ const typeDefs = gql`
     email: String!
     tags: [String]
   }
+
+  input AddUserInput {
+    offId: String!
+    email: String!
+    tags: [String]
+  }
+
+  extend type Mutation {
+    addUser(input: AddUserInput!): User
+  }
 `;
 
 export default typeDefs;
