@@ -6,3 +6,5 @@
 
 # misc
 yarn-error.log
+
+.env

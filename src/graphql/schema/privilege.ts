@@ -4,21 +4,25 @@ const { gql } = require('apollo-server-express');
 const typeDefs = gql`
   type Privilege {
     id: ID!
-    appId: ID!
+    app: App!
     name: String!
     short: String
     tags: [String]
   }
 
-  input addPrivilegeInput {
+  input AddPrivilegeInput {
     appId: String!
     name: String!
     short: String
     tags: [String]
   }
 
+  extend type Query {
+    getAllPrivileges: [Privilege]
+  }
+
   extend type Mutation {
-    addPrivilege(input: addPrivilegeInput!): Privilege
+    addPrivilege(input: AddPrivilegeInput!): Privilege
   }
 `;
 

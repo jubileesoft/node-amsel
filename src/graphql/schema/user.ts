@@ -9,6 +9,10 @@ const typeDefs = gql`
     tags: [String]
   }
 
+  extend type Query {
+    getAllUsers: [User]
+  }
+
   input AddUserInput {
     offId: String!
     email: String!

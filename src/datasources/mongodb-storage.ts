@@ -103,21 +103,36 @@ export default class MongoDbStorage implements Storage {
       case Collection.users:
         return this.mapUserDocs(docs);
 
+      case Collection.privileges:
+        return this.mapPrivilegeDocs(docs);
+
       default:
         return null;
     }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public async getOwner(appId: string): Promise<any | null> {
+  public async getOwnerFromApp(appId: string): Promise<any | null> {
     //
     const appDoc: AppDoc = await this.getDocument(Collection.apps, { _id: new mongo.ObjectID(appId) });
     if (!appDoc) {
       return null;
     }
 
-    const userDoc: UserDoc = await this.getDocument(Collection.users, { _id: new mongo.ObjectID(appDoc.owner_id) });
+    const userDoc: UserDoc = await this.getDocument(Collection.users, { _id: appDoc.owner_id });
     return userDoc;
+  }
+
+  public async getAppFromPrivilege(privilegeId: string): Promise<any | null> {
+    const privilegeDoc: PrivilegeDoc = await this.getDocument(Collection.privileges, {
+      _id: new mongo.ObjectID(privilegeId),
+    });
+    if (!privilegeDoc) {
+      return null;
+    }
+
+    const appDoc: AppDoc = await this.getDocument(Collection.apps, { _id: privilegeDoc.app_id });
+    return appDoc;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -258,7 +273,7 @@ export default class MongoDbStorage implements Storage {
   private mapPrivilegeDocToGql(doc: PrivilegeDoc): Privilege {
     return {
       id: doc._id.toString(),
-      appId: doc.app_id.toString(),
+      //appId: doc.app_id.toString(),
       name: doc.name,
       short: doc.short,
       tags: doc.tags,

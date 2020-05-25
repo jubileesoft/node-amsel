@@ -28,12 +28,20 @@ export default class GenericApi extends DataSource {
     return this.storage.mapDocs(collection, docs);
   }
 
-  public async getOwner(appId: string): Promise<User | null> {
-    const doc = await this.storage.getOwner(appId);
+  public async getOwnerFromApp(appId: string): Promise<User | null> {
+    const doc = await this.storage.getOwnerFromApp(appId);
     if (!doc) {
       return null;
     }
     return this.storage.mapUserDoc(doc);
+  }
+
+  public async getAppFromPrivilege(privilegeId: string): Promise<App | null> {
+    const doc = await this.storage.getAppFromPrivilege(privilegeId);
+    if (!doc) {
+      return null;
+    }
+    return this.storage.mapAppDoc(doc);
   }
 
   public async addUser(input: AddUserInput): Promise<User | null> {

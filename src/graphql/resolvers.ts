@@ -1,5 +1,5 @@
 import { IResolvers } from 'graphql-tools';
-import { AuthenticationError } from 'apollo-server-express';
+import { AuthenticationError, ApolloError } from 'apollo-server-express';
 import { MicrosoftUser } from '@jubileesoft/amsel';
 import GenericApi from '../datasources/generic-api';
 import { Collection, AddUserInput, AddAppInput, AddPrivilegeInput } from './types';
@@ -19,16 +19,30 @@ const ensureIsAuthenticated = (context: ApolloServerContext): void => {
 
 const resolvers: IResolvers = {
   Query: {
+    getAllUsers: async (_, __, context: ApolloServerContext): Promise<User[] | null> => {
+      const users: User[] | null = await context.dataSources.genericApi.getCollection(Collection.users);
+      return users;
+    },
     getAllApps: async (_, ___, context: ApolloServerContext): Promise<App[] | null> => {
       ensureIsAuthenticated(context);
       const apps: App[] | null = await context.dataSources.genericApi.getCollection(Collection.apps);
       return apps;
     },
+    getAllPrivileges: async (_, __, context: ApolloServerContext): Promise<Privilege[] | null> => {
+      const privileges: Privilege[] | null = await context.dataSources.genericApi.getCollection(Collection.privileges);
+      return privileges;
+    },
   },
   App: {
     async owner(app: App, __, context: ApolloServerContext): Promise<User | null> {
-      const user: User | null = await context.dataSources.genericApi.getOwner(app.id);
+      const user: User | null = await context.dataSources.genericApi.getOwnerFromApp(app.id);
       return user;
+    },
+  },
+  Privilege: {
+    async app(privilege: Privilege, __, context: ApolloServerContext): Promise<App | null> {
+      const app: App | null = await context.dataSources.genericApi.getAppFromPrivilege(privilege.id);
+      return app;
     },
   },
   Mutation: {

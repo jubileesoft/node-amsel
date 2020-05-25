@@ -30,7 +30,7 @@ export interface AddAppInput {
 
 export interface Privilege {
   id: string;
-  appId: string;
+  app?: App;
   name: string;
   short?: string;
   tags?: string[];

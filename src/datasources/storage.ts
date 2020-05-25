@@ -11,7 +11,8 @@ export default interface Storage {
   mapUserDocs(docs: any[]): User[];
   mapPrivilegeDoc(doc: any): Privilege;
   mapPrivilegeDocs(docs: any[]): Privilege[];
-  getOwner(appId: string): Promise<User | null>;
+  getOwnerFromApp(appId: string): Promise<any | null>;
+  getAppFromPrivilege(privilegeId: string): Promise<any | null>;
   addUser(input: AddUserInput): Promise<any | null>;
   addApp(input: AddAppInput): Promise<any | null>;
   addPrivilege(input: AddPrivilegeInput): Promise<any | null>;

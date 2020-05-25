@@ -10,6 +10,10 @@ import MongoDbStorage from './datasources/mongodb-storage';
 import resolvers from './graphql/resolvers';
 import typeDefs from './graphql/type-defs';
 
+import { config } from 'dotenv';
+
+config();
+
 const port = process.env.PORT || 3000;
 const app = express();
 
@@ -34,6 +38,9 @@ const server = new ApolloServer({
   playground: true,
   typeDefs,
   resolvers,
+  engine: {
+    apiKey: process.env.APOLLOSERVER_ENGINE_APIKEY,
+  },
   // context: async (input): Promise<object> => {
   //   const notAuthenticated = { user: null };
   //   try {
