@@ -28,5 +28,5 @@ export default interface Storage {
   getPrivilegesFromPrivilegePool(privilegePoolId: string): Promise<any[] | null>;
   addUser(input: AddUserInput): Promise<any | null>;
   addApp(input: AddAppInput): Promise<any | null>;
-  addPrivilege(input: AddPrivilegeInput): Promise<any | null>;
+  addPrivilege(appId: string, input: AddPrivilegeInput): Promise<any | null>;
 }

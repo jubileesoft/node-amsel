@@ -1,7 +1,17 @@
 import { DataSource } from 'apollo-datasource';
 import { MicrosoftUser } from '@jubileesoft/amsel';
 import Storage from './storage';
-import { Collection, User, AddUserInput, App, AddAppInput, AddPrivilegeInput, Privilege } from '../graphql/types';
+import {
+  Collection,
+  User,
+  AddUserInput,
+  App,
+  AddAppInput,
+  AddPrivilegeInput,
+  Privilege,
+  AddPrivilegePoolInput,
+  PrivilegePool,
+} from '../graphql/types';
 
 export default class GenericApi extends DataSource {
   public context!: { user: MicrosoftUser };
@@ -76,12 +86,20 @@ export default class GenericApi extends DataSource {
     return this.storage.mapAppDoc(doc);
   }
 
-  public async addPrivilege(input: AddPrivilegeInput): Promise<Privilege | null> {
-    const doc = await this.storage.addPrivilege(input);
+  public async addPrivilege(appId: string, input: AddPrivilegeInput): Promise<Privilege | null> {
+    const doc = await this.storage.addPrivilege(appId, input);
     if (!doc) {
       return null;
     }
     return this.storage.mapPrivilegeDoc(doc);
+  }
+
+  public async addPrivilegePool(appId: string, input: AddPrivilegePoolInput): Promise<PrivilegePool | null> {
+    const doc = await this.storage.addPrivilegePool(appId, input);
+    if (!doc) {
+      return null;
+    }
+    return this.storage.mapPrivilegePoolDoc(doc);
   }
 
   // #endregion Public Methods

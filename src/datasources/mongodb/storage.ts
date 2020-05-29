@@ -1,5 +1,5 @@
 import mongo from 'mongodb';
-import { Collection, Privilege, PrivilegePool } from '../../graphql/types';
+import { Collection, Privilege, PrivilegePool, AddPrivilegePoolInput } from '../../graphql/types';
 import { MongoDBConfig } from './config';
 import { AppDoc, UserDoc, PrivilegeDoc, PrivilegePoolDoc } from './docs';
 import { App, User, AddUserInput, AddAppInput, AddPrivilegeInput } from '../../graphql/types';
@@ -259,7 +259,7 @@ export default class MongoDbStorage implements Storage {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public async addPrivilege(input: AddPrivilegeInput): Promise<any | null> {
+  public async addPrivilege(appId: string, input: AddPrivilegeInput): Promise<any | null> {
     const appsCollection = collectionMap.get(Collection.apps);
     const privilegesCollection = collectionMap.get(Collection.privileges);
     if (!appsCollection || !privilegesCollection) {
@@ -273,9 +273,7 @@ export default class MongoDbStorage implements Storage {
       const db = client.db(this.config.database);
 
       // Get app
-      const appDoc: AppDoc | null = await db
-        .collection(appsCollection)
-        .findOne({ _id: new mongo.ObjectID(input.appId) });
+      const appDoc: AppDoc | null = await db.collection(appsCollection).findOne({ _id: new mongo.ObjectID(appId) });
       if (!appDoc) {
         return null;
       }
@@ -289,6 +287,61 @@ export default class MongoDbStorage implements Storage {
         tags: input.tags,
       };
       await db.collection(privilegesCollection).insertOne(newDoc);
+      return newDoc;
+    } catch (error) {
+      return null;
+    } finally {
+      client?.close();
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public async addPrivilegePool(appId: string, input: AddPrivilegePoolInput): Promise<any | null> {
+    const appsCollection = collectionMap.get(Collection.apps);
+    const privilegesCollection = collectionMap.get(Collection.privileges);
+    const privilegePoolsCollection = collectionMap.get(Collection.privilegepools);
+    if (!appsCollection || !privilegePoolsCollection || !privilegesCollection) {
+      return null;
+    }
+
+    let client: mongo.MongoClient | undefined;
+    try {
+      client = await this.getClient();
+
+      const db = client.db(this.config.database);
+
+      // Get app doc
+      const appDoc: AppDoc | null = await db.collection(appsCollection).findOne({ _id: new mongo.ObjectID(appId) });
+      if (!appDoc) {
+        return null;
+      }
+
+      // Get privilege docs
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const privilegeFilter: any = [];
+      input.privilegeIds.forEach((privilegeId) => {
+        privilegeFilter.push({ _id: new mongo.ObjectID(privilegeId) });
+      });
+      const privilegeDocs: PrivilegeDoc[] = await db
+        .collection(privilegesCollection)
+        .find({ $or: privilegeFilter })
+        .toArray();
+
+      if (privilegeDocs.length === 0) {
+        return null;
+      }
+
+      const newDoc: PrivilegePoolDoc = {
+        _id: new mongo.ObjectID(),
+        // eslint-disable-next-line @typescript-eslint/camelcase
+        app_id: appDoc._id,
+        name: input.name,
+        short: input.short,
+        tags: input.tags,
+        // eslint-disable-next-line @typescript-eslint/camelcase
+        privilege_ids: privilegeDocs.map((privilegeDoc) => privilegeDoc._id),
+      };
+      await db.collection(privilegePoolsCollection).insertOne(newDoc);
       return newDoc;
     } catch (error) {
       return null;

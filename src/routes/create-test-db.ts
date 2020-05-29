@@ -51,60 +51,53 @@ const createPrivileges = async (context: ApolloServerContext, apps: App[]): Prom
   const privileges: Array<Privilege | null> = [];
 
   const a: AddPrivilegeInput = {
-    appId: apps[0].id,
     name: 'Create new project',
     short: 'BD.PC',
     tags: ['project'],
   };
-  privileges.push(await resolvers.Mutation.addPrivilege(null, { input: a }, context));
+  privileges.push(await resolvers.Mutation.addPrivilege(null, { appId: apps[0].id, input: a }, context));
 
   const b: AddPrivilegeInput = {
-    appId: apps[0].id,
     name: 'Read Project GENERAL',
     short: 'BD.PG read',
     tags: ['project'],
   };
-  privileges.push(await resolvers.Mutation.addPrivilege(null, { input: b }, context));
+  privileges.push(await resolvers.Mutation.addPrivilege(null, { appId: apps[0].id, input: b }, context));
 
   const c: AddPrivilegeInput = {
-    appId: apps[0].id,
     name: 'Write Project GENERAL',
     short: 'BD.PG write',
     tags: ['project'],
   };
-  privileges.push(await resolvers.Mutation.addPrivilege(null, { input: c }, context));
+  privileges.push(await resolvers.Mutation.addPrivilege(null, { appId: apps[0].id, input: c }, context));
 
   const d: AddPrivilegeInput = {
-    appId: apps[0].id,
     name: 'Read Project OFFERS',
     short: 'BD.PO read',
     tags: ['project'],
   };
-  privileges.push(await resolvers.Mutation.addPrivilege(null, { input: d }, context));
+  privileges.push(await resolvers.Mutation.addPrivilege(null, { appId: apps[0].id, input: d }, context));
 
   const e: AddPrivilegeInput = {
-    appId: apps[0].id,
     name: 'Write Project OFFERS',
     short: 'BD.PO write',
     tags: ['project'],
   };
-  privileges.push(await resolvers.Mutation.addPrivilege(null, { input: e }, context));
+  privileges.push(await resolvers.Mutation.addPrivilege(null, { appId: apps[0].id, input: e }, context));
 
   const f: AddPrivilegeInput = {
-    appId: apps[0].id,
     name: 'Read Project ACCOUNTING(s)',
     short: 'BD.PA read',
     tags: ['project'],
   };
-  privileges.push(await resolvers.Mutation.addPrivilege(null, { input: f }, context));
+  privileges.push(await resolvers.Mutation.addPrivilege(null, { appId: apps[0].id, input: f }, context));
 
   const g: AddPrivilegeInput = {
-    appId: apps[0].id,
     name: 'Write Project ACCOUNTING(s)',
     short: 'BD.PA write',
     tags: ['project'],
   };
-  privileges.push(await resolvers.Mutation.addPrivilege(null, { input: g }, context));
+  privileges.push(await resolvers.Mutation.addPrivilege(null, { appId: apps[0].id, input: g }, context));
 
   return removeNullsFromArray<Privilege>(privileges);
 };

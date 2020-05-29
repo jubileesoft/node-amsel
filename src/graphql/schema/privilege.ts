@@ -11,7 +11,6 @@ const typeDefs = gql`
   }
 
   input AddPrivilegeInput {
-    appId: String!
     name: String!
     short: String
     tags: [String]
@@ -22,7 +21,7 @@ const typeDefs = gql`
   }
 
   extend type Mutation {
-    addPrivilege(input: AddPrivilegeInput!): Privilege
+    addPrivilege(appId: String!, input: AddPrivilegeInput!): Privilege
   }
 `;
 
