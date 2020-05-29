@@ -1,7 +1,7 @@
 import mongo from 'mongodb';
-import { Collection, Privilege } from '../graphql/types';
+import { Collection, Privilege, PrivilegePool } from '../graphql/types';
 import { MongoDBConfig } from './mongodb/config';
-import { AppDoc, UserDoc, PrivilegeDoc } from './mongodb/docs';
+import { AppDoc, UserDoc, PrivilegeDoc, PrivilegePoolDoc } from './mongodb/docs';
 import { App, User, AddUserInput, AddAppInput, AddPrivilegeInput } from '../graphql/types';
 import Storage from './storage';
 
@@ -9,6 +9,7 @@ const collectionMap = new Map<Collection, string>();
 collectionMap.set(Collection.apps, 'apps');
 collectionMap.set(Collection.users, 'users');
 collectionMap.set(Collection.privileges, 'privileges');
+collectionMap.set(Collection.privilegepools, 'privilegepools');
 
 export default class MongoDbStorage implements Storage {
   private config = MongoDBConfig;
@@ -94,6 +95,17 @@ export default class MongoDbStorage implements Storage {
     return privileges;
   }
 
+  public mapPrivilegePoolDoc(doc: PrivilegePoolDoc): PrivilegePool {
+    return this.mapPrivilegePoolDocToGql(doc);
+  }
+
+  public mapPrivilegePoolDocs(docs: PrivilegePoolDoc[]): PrivilegePool[] {
+    const privilegePools: PrivilegePool[] = docs.map((doc) => {
+      return this.mapPrivilegePoolDocToGql(doc);
+    });
+    return privilegePools;
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public mapDocs(collection: Collection, docs: any[]): any[] | null {
     switch (collection) {
@@ -105,6 +117,9 @@ export default class MongoDbStorage implements Storage {
 
       case Collection.privileges:
         return this.mapPrivilegeDocs(docs);
+
+      case Collection.privilegepools:
+        return this.mapPrivilegePoolDocs(docs);
 
       default:
         return null;
@@ -123,6 +138,7 @@ export default class MongoDbStorage implements Storage {
     return userDoc;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async getAppFromPrivilege(privilegeId: string): Promise<any | null> {
     const privilegeDoc: PrivilegeDoc = await this.getDocument(Collection.privileges, {
       _id: new mongo.ObjectID(privilegeId),
@@ -131,8 +147,43 @@ export default class MongoDbStorage implements Storage {
       return null;
     }
 
-    const appDoc: AppDoc = await this.getDocument(Collection.apps, { _id: privilegeDoc.app_id });
-    return appDoc;
+    return this.getDocument(Collection.apps, { _id: privilegeDoc.app_id });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public async getAppFromPrivilegePool(privilegePoolId: string): Promise<any | null> {
+    const privilegePoolDoc: PrivilegePoolDoc = await this.getDocument(Collection.privilegepools, {
+      _id: new mongo.ObjectID(privilegePoolId),
+    });
+    if (!privilegePoolDoc) {
+      return null;
+    }
+
+    return this.getDocument(Collection.apps, { _id: privilegePoolDoc.app_id });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public async getPrivilegesFromPrivilegePool(privilegePoolId: string): Promise<any[] | null> {
+    const privilegePoolDoc: PrivilegePoolDoc = await this.getDocument(Collection.privilegepools, {
+      _id: new mongo.ObjectID(privilegePoolId),
+    });
+    if (!privilegePoolDoc) {
+      return null;
+    }
+
+    if (!privilegePoolDoc.privilege_ids) {
+      return [];
+    }
+
+    // Build Filter
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const filterArray: any[] = [];
+    privilegePoolDoc.privilege_ids.forEach((_id) => {
+      filterArray.push({
+        _id: _id,
+      });
+    });
+    return this.getDocuments(Collection.privileges, { $or: filterArray });
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -273,7 +324,15 @@ export default class MongoDbStorage implements Storage {
   private mapPrivilegeDocToGql(doc: PrivilegeDoc): Privilege {
     return {
       id: doc._id.toString(),
-      //appId: doc.app_id.toString(),
+      name: doc.name,
+      short: doc.short,
+      tags: doc.tags,
+    };
+  }
+
+  private mapPrivilegePoolDocToGql(doc: PrivilegePoolDoc): PrivilegePool {
+    return {
+      id: doc._id.toString(),
       name: doc.name,
       short: doc.short,
       tags: doc.tags,

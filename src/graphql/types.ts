@@ -2,6 +2,7 @@ export enum Collection {
   users,
   apps,
   privileges,
+  privilegepools,
 }
 
 export interface User {
@@ -42,3 +43,14 @@ export interface AddPrivilegeInput {
   short?: string;
   tags: string[];
 }
+
+export interface PrivilegePool {
+  id: string;
+  app?: App;
+  name: string;
+  short?: string;
+  tags?: string[];
+  privileges?: Privilege[];
+}
+
+export interface AddPrivilegePoolInput {}

@@ -1,9 +1,9 @@
 import { IResolvers } from 'graphql-tools';
-import { AuthenticationError, ApolloError } from 'apollo-server-express';
+import { AuthenticationError } from 'apollo-server-express';
 import { MicrosoftUser } from '@jubileesoft/amsel';
 import GenericApi from '../datasources/generic-api';
 import { Collection, AddUserInput, AddAppInput, AddPrivilegeInput } from './types';
-import { App, User, Privilege } from './types';
+import { App, User, Privilege, PrivilegePool } from './types';
 
 interface ApolloServerContext {
   user: MicrosoftUser;
@@ -32,6 +32,12 @@ const resolvers: IResolvers = {
       const privileges: Privilege[] | null = await context.dataSources.genericApi.getCollection(Collection.privileges);
       return privileges;
     },
+    getAllPrivilegePools: async (_, __, context: ApolloServerContext): Promise<PrivilegePool[] | null> => {
+      const privilegePools: PrivilegePool[] | null = await context.dataSources.genericApi.getCollection(
+        Collection.privilegepools,
+      );
+      return privilegePools;
+    },
   },
   App: {
     async owner(app: App, __, context: ApolloServerContext): Promise<User | null> {
@@ -43,6 +49,14 @@ const resolvers: IResolvers = {
     async app(privilege: Privilege, __, context: ApolloServerContext): Promise<App | null> {
       const app: App | null = await context.dataSources.genericApi.getAppFromPrivilege(privilege.id);
       return app;
+    },
+  },
+  PrivilegePool: {
+    async app(privilegePool: PrivilegePool, __, context: ApolloServerContext): Promise<App | null> {
+      return context.dataSources.genericApi.getAppFromPrivilegePool(privilegePool.id);
+    },
+    async privileges(privilegePool: PrivilegePool, __, context: ApolloServerContext): Promise<Privilege[] | null> {
+      return context.dataSources.genericApi.getPrivilegesFromPrivilegePool(privilegePool.id);
     },
   },
   Mutation: {

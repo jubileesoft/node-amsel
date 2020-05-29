@@ -20,3 +20,12 @@ export interface PrivilegeDoc {
   short?: string;
   tags?: string[];
 }
+
+export interface PrivilegePoolDoc {
+  _id: mongo.ObjectID;
+  app_id: mongo.ObjectID;
+  name: string;
+  short?: string;
+  tags?: string[];
+  privilege_ids?: mongo.ObjectID[];
+}
