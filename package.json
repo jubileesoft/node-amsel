@@ -5,7 +5,7 @@
   "scripts": {
     "test": "none",
     "clean": "run-script-os",
-    "clean:windows": "if exist dist rmdir dist /s /q",
+    "clean:windows": "if exist dist rmdir dist /s",
     "clean:nix": "rm -rf ./dist",
     "lint": "eslint src/**/*.{ts,js} --fix",
     "prebuild": "yarn run clean",

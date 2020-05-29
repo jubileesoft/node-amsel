@@ -14,7 +14,7 @@ const typeDefs = gql`
 
   input AddAppInput {
     name: String!
-    ownerOffId: String!
+    ownerId: String!
   }
 
   extend type Mutation {

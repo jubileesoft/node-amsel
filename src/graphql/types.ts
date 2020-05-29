@@ -26,7 +26,7 @@ export interface App {
 
 export interface AddAppInput {
   name: string;
-  ownerOffId: string;
+  ownerId: string;
 }
 
 export interface Privilege {

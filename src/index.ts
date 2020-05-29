@@ -6,7 +6,7 @@ import express from 'express';
 import routes from './routes';
 
 import GenericApi from './datasources/generic-api';
-import MongoDbStorage from './datasources/mongodb-storage';
+import MongoDbStorage from './datasources/mongodb/storage';
 import resolvers from './graphql/resolvers';
 import typeDefs from './graphql/type-defs';
 

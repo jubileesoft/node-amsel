@@ -5,9 +5,21 @@ import GenericApi from '../datasources/generic-api';
 import { Collection, AddUserInput, AddAppInput, AddPrivilegeInput } from './types';
 import { App, User, Privilege, PrivilegePool } from './types';
 
-interface ApolloServerContext {
+export interface ApolloServerContext {
   user: MicrosoftUser;
   dataSources: { genericApi: GenericApi };
+}
+
+interface AmselResolvers extends IResolvers {
+  Mutation: {
+    addUser(notUsed: unknown, args: { input: AddUserInput }, context: ApolloServerContext): Promise<User | null>;
+    addApp(notUsed: unknown, args: { input: AddAppInput }, context: ApolloServerContext): Promise<App | null>;
+    addPrivilege(
+      notUsed: unknown,
+      args: { input: AddPrivilegeInput },
+      context: ApolloServerContext,
+    ): Promise<Privilege | null>;
+  };
 }
 
 const ensureIsAuthenticated = (context: ApolloServerContext): void => {
@@ -17,7 +29,7 @@ const ensureIsAuthenticated = (context: ApolloServerContext): void => {
   }
 };
 
-const resolvers: IResolvers = {
+const resolvers: AmselResolvers = {
   Query: {
     getAllUsers: async (_, __, context: ApolloServerContext): Promise<User[] | null> => {
       const users: User[] | null = await context.dataSources.genericApi.getCollection(Collection.users);

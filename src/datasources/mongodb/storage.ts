@@ -1,9 +1,9 @@
 import mongo from 'mongodb';
-import { Collection, Privilege, PrivilegePool } from '../graphql/types';
-import { MongoDBConfig } from './mongodb/config';
-import { AppDoc, UserDoc, PrivilegeDoc, PrivilegePoolDoc } from './mongodb/docs';
-import { App, User, AddUserInput, AddAppInput, AddPrivilegeInput } from '../graphql/types';
-import Storage from './storage';
+import { Collection, Privilege, PrivilegePool } from '../../graphql/types';
+import { MongoDBConfig } from './config';
+import { AppDoc, UserDoc, PrivilegeDoc, PrivilegePoolDoc } from './docs';
+import { App, User, AddUserInput, AddAppInput, AddPrivilegeInput } from '../../graphql/types';
+import Storage from '../storage';
 
 const collectionMap = new Map<Collection, string>();
 collectionMap.set(Collection.apps, 'apps');
@@ -236,7 +236,9 @@ export default class MongoDbStorage implements Storage {
       const db = client.db(this.config.database);
 
       // Get intended owner first
-      const ownerDoc: UserDoc | null = await db.collection(usersCollection).findOne({ offId: input.ownerOffId });
+      const ownerDoc: UserDoc | null = await db
+        .collection(usersCollection)
+        .findOne({ _id: new mongo.ObjectID(input.ownerId) });
       if (!ownerDoc) {
         return null;
       }
