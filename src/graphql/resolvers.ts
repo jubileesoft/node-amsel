@@ -2,8 +2,8 @@ import { IResolvers } from 'graphql-tools';
 import { AuthenticationError } from 'apollo-server-express';
 import { MicrosoftUser } from '@jubileesoft/amsel';
 import GenericApi from '../datasources/generic-api';
-import { Collection, AddUserInput, AddAppInput, AddPrivilegeInput, AddPrivilegePoolInput } from './types';
-import { App, User, Privilege, PrivilegePool } from './types';
+import { Collection, AddAppUserInput, AddAppInput, AddPrivilegeInput, AddPrivilegePoolInput } from './types';
+import { App, AppUser, Privilege, PrivilegePool } from './types';
 
 export interface ApolloServerContext {
   user: MicrosoftUser;
@@ -12,8 +12,12 @@ export interface ApolloServerContext {
 
 interface AmselResolvers extends IResolvers {
   Mutation: {
-    addUser(notUsed: unknown, args: { input: AddUserInput }, context: ApolloServerContext): Promise<User | null>;
     addApp(notUsed: unknown, args: { input: AddAppInput }, context: ApolloServerContext): Promise<App | null>;
+    addAppUser(
+      notUsed: unknown,
+      args: { appId: string; input: AddAppUserInput },
+      context: ApolloServerContext,
+    ): Promise<AppUser | null>;
     addPrivilege(
       notUsed: unknown,
       args: { appId: string; input: AddPrivilegeInput },
@@ -36,15 +40,16 @@ const ensureIsAuthenticated = (context: ApolloServerContext): void => {
 
 const resolvers: AmselResolvers = {
   Query: {
-    getAllUsers: async (_, __, context: ApolloServerContext): Promise<User[] | null> => {
-      const users: User[] | null = await context.dataSources.genericApi.getCollection(Collection.users);
-      return users;
-    },
-    getAllApps: async (_, ___, context: ApolloServerContext): Promise<App[] | null> => {
+    getApps: async (_, ___, context: ApolloServerContext): Promise<App[] | null> => {
       ensureIsAuthenticated(context);
       const apps: App[] | null = await context.dataSources.genericApi.getCollection(Collection.apps);
       return apps;
     },
+    getAppUsers: async (_, args: { appId: string }, context: ApolloServerContext): Promise<AppUser[] | null> => {
+      const appUsers: AppUser[] | null = await context.dataSources.genericApi.getAppUsers(args.appId);
+      return appUsers;
+    },
+
     getAllPrivileges: async (_, __, context: ApolloServerContext): Promise<Privilege[] | null> => {
       const privileges: Privilege[] | null = await context.dataSources.genericApi.getCollection(Collection.privileges);
       return privileges;
@@ -57,9 +62,13 @@ const resolvers: AmselResolvers = {
     },
   },
   App: {
-    async owner(app: App, __, context: ApolloServerContext): Promise<User | null> {
-      const user: User | null = await context.dataSources.genericApi.getOwnerFromApp(app.id);
-      return user;
+    async users(app: App, __, context: ApolloServerContext): Promise<AppUser[] | null> {
+      return context.dataSources.genericApi.getAppUsers(app.id);
+    },
+  },
+  AppUser: {
+    async app(appUser: AppUser, __, context: ApolloServerContext): Promise<App | null> {
+      return context.dataSources.genericApi.getAppFromAppUser(appUser.id);
     },
   },
   Privilege: {
@@ -77,13 +86,17 @@ const resolvers: AmselResolvers = {
     },
   },
   Mutation: {
-    addUser: async (_, args: { input: AddUserInput }, context: ApolloServerContext): Promise<User | null> => {
-      const user: User | null = await context.dataSources.genericApi.addUser(args.input);
-      return user;
-    },
     addApp: async (_, args: { input: AddAppInput }, context: ApolloServerContext): Promise<App | null> => {
       return context.dataSources.genericApi.addApp(args.input);
     },
+    addAppUser: async (
+      _,
+      args: { appId: string; input: AddAppUserInput },
+      context: ApolloServerContext,
+    ): Promise<AppUser | null> => {
+      return context.dataSources.genericApi.addAppUser(args.appId, args.input);
+    },
+
     addPrivilege: async (
       _,
       args: { appId: string; input: AddPrivilegeInput },

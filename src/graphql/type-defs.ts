@@ -6,7 +6,7 @@ import objectPoolTypeDefs from './schema/object-pool';
 import objectTypeDefs from './schema/object';
 import privilegePoolTypeDefs from './schema/privilege-pool';
 import privilegeTypeDefs from './schema/privilege';
-import userTypeDefs from './schema/user';
+import appUserTypeDefs from './schema/app-user';
 
 const root = gql`
   type Query {
@@ -25,7 +25,7 @@ const typeDefs = [
   objectTypeDefs,
   privilegePoolTypeDefs,
   privilegeTypeDefs,
-  userTypeDefs,
+  appUserTypeDefs,
 ];
 
 export default typeDefs;

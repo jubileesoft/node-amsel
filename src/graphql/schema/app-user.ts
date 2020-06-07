@@ -2,25 +2,26 @@
 const { gql } = require('apollo-server-express');
 
 const typeDefs = gql`
-  type User {
+  type AppUser {
     id: ID!
+    app: App!
     offId: ID!
     email: String!
     tags: [String]
   }
 
   extend type Query {
-    getAllUsers: [User]
+    getAppUsers(appId: String!): [AppUser]
   }
 
-  input AddUserInput {
+  input AddAppUserInput {
     offId: String!
     email: String!
     tags: [String]
   }
 
   extend type Mutation {
-    addUser(input: AddUserInput!): User
+    addAppUser(appId: String!, input: AddAppUserInput!): AppUser
   }
 `;
 

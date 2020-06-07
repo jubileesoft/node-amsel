@@ -1,13 +1,13 @@
 import mongo from 'mongodb';
 import { Collection, Privilege, PrivilegePool, AddPrivilegePoolInput } from '../../graphql/types';
 import { MongoDBConfig } from './config';
-import { AppDoc, UserDoc, PrivilegeDoc, PrivilegePoolDoc } from './docs';
-import { App, User, AddUserInput, AddAppInput, AddPrivilegeInput } from '../../graphql/types';
+import { AppDoc, AppUserDoc, PrivilegeDoc, PrivilegePoolDoc } from './docs';
+import { App, AppUser, AddAppUserInput, AddAppInput, AddPrivilegeInput } from '../../graphql/types';
 import Storage from '../storage';
 
 const collectionMap = new Map<Collection, string>();
 collectionMap.set(Collection.apps, 'apps');
-collectionMap.set(Collection.users, 'users');
+collectionMap.set(Collection.appusers, 'appusers');
 collectionMap.set(Collection.privileges, 'privileges');
 collectionMap.set(Collection.privilegepools, 'privilegepools');
 
@@ -62,6 +62,42 @@ export default class MongoDbStorage implements Storage {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public async getAppUsers(appId: string): Promise<any[] | null> {
+    const col = collectionMap.get(Collection.appusers);
+    if (!col) {
+      return null;
+    }
+
+    let client: mongo.MongoClient | undefined;
+    try {
+      client = await this.getClient();
+
+      const db = client.db(this.config.database);
+      const docs = await db
+        .collection(col)
+        // eslint-disable-next-line @typescript-eslint/camelcase
+        .find({ app_id: new mongo.ObjectID(appId) })
+        .toArray();
+      return docs;
+    } catch (error) {
+      return null;
+    } finally {
+      client?.close();
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public async getAppFromAppUser(appUserId: string): Promise<any | null> {
+    const appUserDoc: AppUserDoc = await this.getDocument(Collection.appusers, { _id: new mongo.ObjectID(appUserId) });
+    if (!appUserDoc) {
+      return null;
+    }
+    return this.getDocument(Collection.apps, { _id: appUserDoc.app_id });
+  }
+
+  // #region Map Functions
+
   public mapAppDoc(doc: AppDoc): App {
     return this.mapAppDocToGql(doc);
   }
@@ -73,13 +109,13 @@ export default class MongoDbStorage implements Storage {
     return apps;
   }
 
-  public mapUserDoc(doc: UserDoc): User {
-    return this.mapUserDocToGql(doc);
+  public mapAppUserDoc(doc: AppUserDoc): AppUser {
+    return this.mapAppUserDocToGql(doc);
   }
 
-  public mapUserDocs(docs: UserDoc[]): User[] {
-    const users: User[] = docs.map((doc) => {
-      return this.mapUserDocToGql(doc);
+  public mapAppUserDocs(docs: AppUserDoc[]): AppUser[] {
+    const users: AppUser[] = docs.map((doc) => {
+      return this.mapAppUserDocToGql(doc);
     });
     return users;
   }
@@ -112,8 +148,8 @@ export default class MongoDbStorage implements Storage {
       case Collection.apps:
         return this.mapAppDocs(docs);
 
-      case Collection.users:
-        return this.mapUserDocs(docs);
+      case Collection.appusers:
+        return this.mapAppUserDocs(docs);
 
       case Collection.privileges:
         return this.mapPrivilegeDocs(docs);
@@ -126,17 +162,7 @@ export default class MongoDbStorage implements Storage {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public async getOwnerFromApp(appId: string): Promise<any | null> {
-    //
-    const appDoc: AppDoc = await this.getDocument(Collection.apps, { _id: new mongo.ObjectID(appId) });
-    if (!appDoc) {
-      return null;
-    }
-
-    const userDoc: UserDoc = await this.getDocument(Collection.users, { _id: appDoc.owner_id });
-    return userDoc;
-  }
+  // #endregion Map Functions
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async getAppFromPrivilege(privilegeId: string): Promise<any | null> {
@@ -187,9 +213,10 @@ export default class MongoDbStorage implements Storage {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public async addUser(input: AddUserInput): Promise<any | null> {
-    const col = collectionMap.get(Collection.users);
-    if (!col) {
+  public async addAppUser(appId: string, input: AddAppUserInput): Promise<any | null> {
+    const col = collectionMap.get(Collection.appusers);
+    const appsCollection = collectionMap.get(Collection.apps);
+    if (!col || !appsCollection) {
       return null;
     }
 
@@ -199,21 +226,29 @@ export default class MongoDbStorage implements Storage {
 
       const db = client.db(this.config.database);
 
-      const user = await db.collection(col).findOne({ offId: input.offId });
-      if (user) {
-        // A user with the same offId already exists. Just return this one.
-        return user;
+      const appDoc = await db.collection(appsCollection).findOne({ _id: new mongo.ObjectID(appId) });
+      if (!appDoc) {
+        return null; // no app found with the given appId
       }
 
-      const newUser: UserDoc = {
+      // eslint-disable-next-line @typescript-eslint/camelcase
+      const userDoc = await db.collection(col).findOne({ app_id: appDoc._id, offId: input.offId });
+      if (userDoc) {
+        // A user with the same offId already exists. Just return this one.
+        return userDoc;
+      }
+
+      const newAppUserDoc: AppUserDoc = {
         _id: new mongo.ObjectID(),
+        // eslint-disable-next-line @typescript-eslint/camelcase
+        app_id: appDoc._id,
         email: input.email,
         offId: input.offId,
         tags: input.tags,
       };
 
-      await db.collection(col).insertOne(newUser);
-      return newUser;
+      await db.collection(col).insertOne(newAppUserDoc);
+      return newAppUserDoc;
     } catch (error) {
       return null;
     } finally {
@@ -224,8 +259,7 @@ export default class MongoDbStorage implements Storage {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async addApp(input: AddAppInput): Promise<any | null> {
     const appsCollection = collectionMap.get(Collection.apps);
-    const usersCollection = collectionMap.get(Collection.users);
-    if (!appsCollection || !usersCollection) {
+    if (!appsCollection) {
       return null;
     }
 
@@ -235,18 +269,9 @@ export default class MongoDbStorage implements Storage {
 
       const db = client.db(this.config.database);
 
-      // Get intended owner first
-      const ownerDoc: UserDoc | null = await db
-        .collection(usersCollection)
-        .findOne({ _id: new mongo.ObjectID(input.ownerId) });
-      if (!ownerDoc) {
-        return null;
-      }
-
       const newApp: AppDoc = {
         _id: new mongo.ObjectID(),
-        // eslint-disable-next-line @typescript-eslint/camelcase
-        owner_id: ownerDoc._id,
+        owner: input.owner,
         name: input.name,
       };
       await db.collection(appsCollection).insertOne(newApp);
@@ -364,10 +389,11 @@ export default class MongoDbStorage implements Storage {
     return {
       id: doc._id.toString(),
       name: doc.name,
+      owner: doc.owner,
     };
   }
 
-  private mapUserDocToGql(doc: UserDoc): User {
+  private mapAppUserDocToGql(doc: AppUserDoc): AppUser {
     return {
       id: doc._id.toString(),
       offId: doc.offId,

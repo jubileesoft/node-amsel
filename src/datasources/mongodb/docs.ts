@@ -2,12 +2,13 @@ import mongo from 'mongodb';
 
 export interface AppDoc {
   _id: mongo.ObjectID;
-  owner_id: mongo.ObjectID;
+  owner: string;
   name: string;
 }
 
-export interface UserDoc {
+export interface AppUserDoc {
   _id: mongo.ObjectID;
+  app_id: mongo.ObjectID;
   offId: string;
   email: string;
   tags?: string[];

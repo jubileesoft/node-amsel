@@ -3,7 +3,7 @@ import resolvers, { ApolloServerContext } from '../graphql/resolvers';
 import GenericApi from '../datasources/generic-api';
 import MongoDbStorage from '../datasources/mongodb/storage';
 import { MicrosoftUser } from '@jubileesoft/amsel';
-import { AddUserInput, User, App, AddAppInput, Privilege, AddPrivilegeInput } from '..//graphql/types';
+import { App, AddAppInput, Privilege, AddPrivilegeInput } from '..//graphql/types';
 
 const removeNullsFromArray = function <T>(items: Array<T | null>): T[] {
   const resultArray: T[] = [];
@@ -15,32 +15,12 @@ const removeNullsFromArray = function <T>(items: Array<T | null>): T[] {
   return resultArray;
 };
 
-const createUsers = async (context: ApolloServerContext): Promise<User[]> => {
-  const items: Array<User | null> = [];
-
-  const a: AddUserInput = {
-    email: 'peter.lustig@wdr.de',
-    offId: '1',
-    tags: ['Company A'],
-  };
-  items.push(await resolvers.Mutation.addUser(null, { input: a }, context));
-
-  const b: AddUserInput = {
-    email: 'james.bond@asecret.com',
-    offId: '2',
-    tags: ['Company B'],
-  };
-  items.push(await resolvers.Mutation.addUser(null, { input: b }, context));
-
-  return removeNullsFromArray<User>(items);
-};
-
-const createApps = async (context: ApolloServerContext, users: User[]): Promise<App[]> => {
+const createApps = async (context: ApolloServerContext): Promise<App[]> => {
   const items: Array<App | null> = [];
 
   const a: AddAppInput = {
     name: 'Supercool App',
-    ownerId: users[0].id,
+    owner: 'peter.lustig@wdr.de',
   };
   items.push(await resolvers.Mutation.addApp(null, { input: a }, context));
 
@@ -127,14 +107,11 @@ export default function (app: Application): void {
       },
     };
 
-    // CREATE USERS
-    const users = await createUsers(context);
-
-    // CREATE APP
-    const apps = await createApps(context, users);
+    // CREATE APPS
+    const apps = await createApps(context);
 
     // CREATE PRIVILEGES
-    const privileges = await createPrivileges(context, apps);
+    await createPrivileges(context, apps);
 
     res.send('OK');
   });

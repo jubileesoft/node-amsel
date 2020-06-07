@@ -1,18 +1,19 @@
 export enum Collection {
-  users,
+  appusers,
   apps,
   privileges,
   privilegepools,
 }
 
-export interface User {
+export interface AppUser {
   id: string;
+  app?: App;
   offId: string;
   email: string;
   tags?: string[];
 }
 
-export interface AddUserInput {
+export interface AddAppUserInput {
   offId: string;
   email: string;
   tags?: string[];
@@ -21,12 +22,12 @@ export interface AddUserInput {
 export interface App {
   id: string;
   name: string;
-  owner?: User;
+  owner: string;
 }
 
 export interface AddAppInput {
   name: string;
-  ownerId: string;
+  owner: string;
 }
 
 export interface Privilege {

@@ -3,8 +3,8 @@ import { MicrosoftUser } from '@jubileesoft/amsel';
 import Storage from './storage';
 import {
   Collection,
-  User,
-  AddUserInput,
+  AppUser,
+  AddAppUserInput,
   App,
   AddAppInput,
   AddPrivilegeInput,
@@ -38,12 +38,21 @@ export default class GenericApi extends DataSource {
     return this.storage.mapDocs(collection, docs);
   }
 
-  public async getOwnerFromApp(appId: string): Promise<User | null> {
-    const doc = await this.storage.getOwnerFromApp(appId);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public async getAppUsers(appId: string): Promise<AppUser[] | null> {
+    const docs = await this.storage.getAppUsers(appId);
+    if (!docs) {
+      return null;
+    }
+    return this.storage.mapDocs(Collection.appusers, docs);
+  }
+
+  public async getAppFromAppUser(appUserId: string): Promise<App | null> {
+    const doc = await this.storage.getAppFromAppUser(appUserId);
     if (!doc) {
       return null;
     }
-    return this.storage.mapUserDoc(doc);
+    return this.storage.mapAppDoc(doc);
   }
 
   public async getAppFromPrivilege(privilegeId: string): Promise<App | null> {
@@ -70,12 +79,12 @@ export default class GenericApi extends DataSource {
     return this.storage.mapDocs(Collection.privileges, docs);
   }
 
-  public async addUser(input: AddUserInput): Promise<User | null> {
-    const doc = await this.storage.addUser(input);
+  public async addAppUser(appId: string, input: AddAppUserInput): Promise<AppUser | null> {
+    const doc = await this.storage.addAppUser(appId, input);
     if (!doc) {
       return null;
     }
-    return this.storage.mapUserDoc(doc);
+    return this.storage.mapAppUserDoc(doc);
   }
 
   public async addApp(input: AddAppInput): Promise<App | null> {
