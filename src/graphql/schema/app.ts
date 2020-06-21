@@ -11,6 +11,7 @@ const typeDefs = gql`
 
   extend type Query {
     getApps: [App]
+    getApp(id: String!): App
   }
 
   input AddAppInput {

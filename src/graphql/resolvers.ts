@@ -43,7 +43,30 @@ const resolvers: AmselResolvers = {
     getApps: async (_, ___, context: ApolloServerContext): Promise<App[] | null> => {
       ensureIsAuthenticated(context);
       const apps: App[] | null = await context.dataSources.genericApi.getCollection(Collection.apps);
-      return apps;
+      if (apps == null) {
+        return null;
+      }
+
+      return apps.sort((a, b) => {
+        const x = a.name.toLowerCase();
+        const y = b.name.toLowerCase();
+        if (x < y) {
+          return -1;
+        }
+
+        if (x > y) {
+          return 1;
+        }
+        return 0;
+      });
+    },
+    getApp: async (_, args: { id: string }, context: ApolloServerContext): Promise<App | null> => {
+      const apps: App[] | null = await context.dataSources.genericApi.getCollection(Collection.apps, { id: args.id });
+      if (apps == null || apps.length === 0) {
+        return null;
+      }
+
+      return apps[0];
     },
     getAppUsers: async (_, args: { appId: string }, context: ApolloServerContext): Promise<AppUser[] | null> => {
       const appUsers: AppUser[] | null = await context.dataSources.genericApi.getAppUsers(args.appId);

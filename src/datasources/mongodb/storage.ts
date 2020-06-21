@@ -17,7 +17,7 @@ export default class MongoDbStorage implements Storage {
   // #region Interface Methods
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public async getDocuments(collection: Collection, filter?: object): Promise<any[] | null> {
+  public async getDocuments(collection: Collection, filter?: any): Promise<any[] | null> {
     const col = collectionMap.get(collection);
     if (!col) {
       return null;
@@ -28,9 +28,17 @@ export default class MongoDbStorage implements Storage {
       client = await this.getClient();
 
       const db = client.db(this.config.database);
+
+      let transformedFilter = null;
+      if (filter && typeof filter.id !== 'undefined') {
+        transformedFilter = filter;
+        transformedFilter._id = new mongo.ObjectID(filter.id);
+        delete transformedFilter.id;
+      }
+
       const docs = await db
         .collection(col)
-        .find(filter ?? {})
+        .find(transformedFilter ?? {})
         .toArray();
 
       return docs;
