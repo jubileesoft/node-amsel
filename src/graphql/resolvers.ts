@@ -4,6 +4,7 @@ import { MicrosoftUser } from '@jubileesoft/amsel';
 import GenericApi from '../datasources/generic-api';
 import { Collection, AddAppUserInput, AddAppInput, AddPrivilegeInput, AddPrivilegePoolInput } from './types';
 import { App, AppUser, Privilege, PrivilegePool } from './types';
+import ISODate from './scalars/ISODate';
 
 export interface ApolloServerContext {
   user: MicrosoftUser;
@@ -13,6 +14,7 @@ export interface ApolloServerContext {
 interface AmselResolvers extends IResolvers {
   Mutation: {
     addApp(notUsed: unknown, args: { input: AddAppInput }, context: ApolloServerContext): Promise<App | null>;
+    createAppApiKey1(notUsed: unknown, args: { appId: string }, context: ApolloServerContext): Promise<string | null>;
     addAppUser(
       notUsed: unknown,
       args: { appId: string; input: AddAppUserInput },
@@ -112,6 +114,9 @@ const resolvers: AmselResolvers = {
     addApp: async (_, args: { input: AddAppInput }, context: ApolloServerContext): Promise<App | null> => {
       return context.dataSources.genericApi.addApp(args.input);
     },
+    createAppApiKey1: async (_, args: { appId: string }, context: ApolloServerContext): Promise<string | null> => {
+      return context.dataSources.genericApi.createAppApiKey1(args.appId);
+    },
     addAppUser: async (
       _,
       args: { appId: string; input: AddAppUserInput },
@@ -135,6 +140,8 @@ const resolvers: AmselResolvers = {
       return context.dataSources.genericApi.addPrivilegePool(args.appId, args.input);
     },
   },
+  // Scalars
+  ISODate,
 };
 
 export default resolvers;

@@ -4,6 +4,8 @@ import { MongoDBConfig } from './config';
 import { AppDoc, AppUserDoc, PrivilegeDoc, PrivilegePoolDoc } from './docs';
 import { App, AppUser, AddAppUserInput, AddAppInput, AddPrivilegeInput } from '../../graphql/types';
 import Storage from '../storage';
+import { v4 as uuidv4 } from 'uuid';
+import bcrypt from 'bcrypt';
 
 const collectionMap = new Map<Collection, string>();
 collectionMap.set(Collection.apps, 'apps');
@@ -281,9 +283,39 @@ export default class MongoDbStorage implements Storage {
         _id: new mongo.ObjectID(),
         owner: input.owner,
         name: input.name,
+        apiKey1CreatedAt: null,
+        apiKey1Hash: null,
       };
       await db.collection(appsCollection).insertOne(newApp);
       return newApp;
+    } catch (error) {
+      return null;
+    } finally {
+      client?.close();
+    }
+  }
+
+  public async createAppApiKey1(appId: string): Promise<string | null> {
+    const appsCollection = collectionMap.get(Collection.apps);
+    if (!appsCollection) {
+      return null;
+    }
+    let client: mongo.MongoClient | undefined;
+    try {
+      client = await this.getClient();
+
+      const db = client.db(this.config.database);
+
+      const filter = { _id: new mongo.ObjectID(appId) };
+
+      const apiKey = uuidv4();
+      const apiKeyHash = await bcrypt.hash(apiKey, 10);
+
+      const updateQuery = { $set: { apiKey1CreatedAt: new Date(), apiKey1Hash: apiKeyHash } };
+
+      await db.collection(appsCollection).updateOne(filter, updateQuery);
+
+      return apiKey;
     } catch (error) {
       return null;
     } finally {
@@ -398,6 +430,7 @@ export default class MongoDbStorage implements Storage {
       id: doc._id.toString(),
       name: doc.name,
       owner: doc.owner,
+      apiKey1CreatedAt: doc.apiKey1CreatedAt,
     };
   }
 

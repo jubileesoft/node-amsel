@@ -23,6 +23,7 @@ export interface App {
   id: string;
   name: string;
   owner: string;
+  apiKey1CreatedAt: Date | null;
 }
 
 export interface AddAppInput {

@@ -95,6 +95,10 @@ export default class GenericApi extends DataSource {
     return this.storage.mapAppDoc(doc);
   }
 
+  public async createAppApiKey1(appId: string): Promise<string | null> {
+    return this.storage.createAppApiKey1(appId);
+  }
+
   public async addPrivilege(appId: string, input: AddPrivilegeInput): Promise<Privilege | null> {
     const doc = await this.storage.addPrivilege(appId, input);
     if (!doc) {

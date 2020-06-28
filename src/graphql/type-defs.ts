@@ -9,6 +9,8 @@ import privilegeTypeDefs from './schema/privilege';
 import appUserTypeDefs from './schema/app-user';
 
 const root = gql`
+  scalar ISODate
+
   type Query {
     root: String
   }

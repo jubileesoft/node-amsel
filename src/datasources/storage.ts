@@ -22,6 +22,7 @@ export default interface Storage {
 
   addAppUser(appId: string, input: AddAppUserInput): Promise<any | null>;
   addApp(input: AddAppInput): Promise<any | null>;
+  createAppApiKey1(appId: string): Promise<string | null>;
   addPrivilege(appId: string, input: AddPrivilegeInput): Promise<any | null>;
   addPrivilegePool(appId: string, input: AddPrivilegePoolInput): Promise<any | null>;
 

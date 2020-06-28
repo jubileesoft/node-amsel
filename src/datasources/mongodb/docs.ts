@@ -4,6 +4,8 @@ export interface AppDoc {
   _id: mongo.ObjectID;
   owner: string;
   name: string;
+  apiKey1CreatedAt: Date | null;
+  apiKey1Hash: string | null;
 }
 
 export interface AppUserDoc {

@@ -6,6 +6,7 @@ const typeDefs = gql`
     id: ID!
     owner: String!
     name: String!
+    apiKey1CreatedAt: ISODate
     users: [AppUser]
   }
 
@@ -21,6 +22,7 @@ const typeDefs = gql`
 
   extend type Mutation {
     addApp(input: AddAppInput!): App
+    createAppApiKey1(appId: String!): String
   }
 `;
 
