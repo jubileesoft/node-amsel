@@ -73,6 +73,31 @@ export default class MongoDbStorage implements Storage {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public async getPrivileges(appId?: string): Promise<any[] | null> {
+    const col = collectionMap.get(Collection.privileges);
+    if (!col) {
+      return null;
+    }
+
+    let client: mongo.MongoClient | undefined;
+    try {
+      client = await this.getClient();
+
+      const db = client.db(this.config.database);
+      const docs = await db
+        .collection(col)
+        // eslint-disable-next-line @typescript-eslint/camelcase
+        .find(appId ? { app_id: new mongo.ObjectID(appId) } : undefined)
+        .toArray();
+      return docs;
+    } catch (error) {
+      return null;
+    } finally {
+      client?.close();
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async getAppUsers(appId: string): Promise<any[] | null> {
     const col = collectionMap.get(Collection.appusers);
     if (!col) {

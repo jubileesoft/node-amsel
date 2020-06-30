@@ -75,8 +75,8 @@ const resolvers: AmselResolvers = {
       return appUsers;
     },
 
-    getAllPrivileges: async (_, __, context: ApolloServerContext): Promise<Privilege[] | null> => {
-      const privileges: Privilege[] | null = await context.dataSources.genericApi.getCollection(Collection.privileges);
+    getPrivileges: async (_, args: { appId?: string }, context: ApolloServerContext): Promise<Privilege[] | null> => {
+      const privileges: Privilege[] | null = await context.dataSources.genericApi.getPrivileges(args.appId);
       return privileges;
     },
     getAllPrivilegePools: async (_, __, context: ApolloServerContext): Promise<PrivilegePool[] | null> => {

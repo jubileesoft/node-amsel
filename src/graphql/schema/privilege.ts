@@ -17,7 +17,7 @@ const typeDefs = gql`
   }
 
   extend type Query {
-    getAllPrivileges: [Privilege]
+    getPrivileges(appId: String): [Privilege]
   }
 
   extend type Mutation {

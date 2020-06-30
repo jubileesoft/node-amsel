@@ -14,6 +14,7 @@ import {
 export default interface Storage {
   getDocuments(collection: Collection, filter?: any): Promise<any[] | null>;
   getDocument(collection: Collection, filter: any): Promise<any | null>;
+  getPrivileges(appId?: string): Promise<any[] | null>;
   getAppUsers(appId: string): Promise<any[] | null>;
   getAppFromAppUser(appUserId: string): Promise<any | null>;
   getAppFromPrivilege(privilegeId: string): Promise<any | null>;

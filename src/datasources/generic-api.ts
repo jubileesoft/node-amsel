@@ -38,6 +38,14 @@ export default class GenericApi extends DataSource {
     return this.storage.mapDocs(collection, docs);
   }
 
+  public async getPrivileges(appId?: string): Promise<Privilege[] | null> {
+    const docs = await this.storage.getPrivileges(appId);
+    if (!docs) {
+      return null;
+    }
+    return this.storage.mapPrivilegeDocs(docs);
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async getAppUsers(appId: string): Promise<AppUser[] | null> {
     const docs = await this.storage.getAppUsers(appId);
