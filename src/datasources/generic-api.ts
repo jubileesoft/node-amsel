@@ -11,6 +11,7 @@ import {
   Privilege,
   AddPrivilegePoolInput,
   PrivilegePool,
+  UpdatePrivilegeInput,
 } from '../graphql/types';
 
 export default class GenericApi extends DataSource {
@@ -109,6 +110,14 @@ export default class GenericApi extends DataSource {
 
   public async addPrivilege(appId: string, input: AddPrivilegeInput): Promise<Privilege | null> {
     const doc = await this.storage.addPrivilege(appId, input);
+    if (!doc) {
+      return null;
+    }
+    return this.storage.mapPrivilegeDoc(doc);
+  }
+
+  public async updatePrivilege(privilegeId: string, input: UpdatePrivilegeInput): Promise<Privilege | null> {
+    const doc = await this.storage.updatePrivilege(privilegeId, input);
     if (!doc) {
       return null;
     }

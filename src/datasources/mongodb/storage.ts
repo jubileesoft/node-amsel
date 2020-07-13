@@ -2,7 +2,14 @@ import mongo from 'mongodb';
 import { Collection, Privilege, PrivilegePool, AddPrivilegePoolInput } from '../../graphql/types';
 import { MongoDBConfig } from './config';
 import { AppDoc, AppUserDoc, PrivilegeDoc, PrivilegePoolDoc } from './docs';
-import { App, AppUser, AddAppUserInput, AddAppInput, AddPrivilegeInput } from '../../graphql/types';
+import {
+  App,
+  AppUser,
+  AddAppUserInput,
+  AddAppInput,
+  AddPrivilegeInput,
+  UpdatePrivilegeInput,
+} from '../../graphql/types';
 import Storage from '../storage';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcrypt';
@@ -90,6 +97,36 @@ export default class MongoDbStorage implements Storage {
         .find(appId ? { app_id: new mongo.ObjectID(appId) } : undefined)
         .toArray();
       return docs;
+    } catch (error) {
+      return null;
+    } finally {
+      client?.close();
+    }
+  }
+
+  public async updatePrivilege(privilegeId: string, input: UpdatePrivilegeInput): Promise<any | null> {
+    const col = collectionMap.get(Collection.privileges);
+    if (!col) {
+      return null;
+    }
+
+    if (Object.keys(input).length === 0) {
+      return null;
+    }
+
+    let client: mongo.MongoClient | undefined;
+    try {
+      client = await this.getClient();
+
+      const db = client.db(this.config.database);
+      // eslint-disable-next-line @typescript-eslint/camelcase
+      const filter = { _id: new mongo.ObjectID(privilegeId) };
+      const updateQuery = { $set: input };
+      await db.collection(col).updateOne(filter, updateQuery);
+
+      const privilegeDoc: PrivilegeDoc | null = await db.collection(col).findOne(filter);
+
+      return privilegeDoc;
     } catch (error) {
       return null;
     } finally {

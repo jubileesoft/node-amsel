@@ -45,6 +45,12 @@ export interface AddPrivilegeInput {
   tags: string[];
 }
 
+export interface UpdatePrivilegeInput {
+  short?: string;
+  name?: string;
+  tags?: string[];
+}
+
 export interface PrivilegePool {
   id: string;
   app?: App;

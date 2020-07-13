@@ -2,7 +2,14 @@ import { IResolvers } from 'graphql-tools';
 import { AuthenticationError } from 'apollo-server-express';
 import { MicrosoftUser } from '@jubileesoft/amsel';
 import GenericApi from '../datasources/generic-api';
-import { Collection, AddAppUserInput, AddAppInput, AddPrivilegeInput, AddPrivilegePoolInput } from './types';
+import {
+  Collection,
+  AddAppUserInput,
+  AddAppInput,
+  AddPrivilegeInput,
+  UpdatePrivilegeInput,
+  AddPrivilegePoolInput,
+} from './types';
 import { App, AppUser, Privilege, PrivilegePool } from './types';
 import ISODate from './scalars/ISODate';
 
@@ -23,6 +30,11 @@ interface AmselResolvers extends IResolvers {
     addPrivilege(
       notUsed: unknown,
       args: { appId: string; input: AddPrivilegeInput },
+      context: ApolloServerContext,
+    ): Promise<Privilege | null>;
+    updatePrivilege(
+      notUsed: unknown,
+      args: { privilegeId: string; input: UpdatePrivilegeInput },
       context: ApolloServerContext,
     ): Promise<Privilege | null>;
     addPrivilegePool(
@@ -132,6 +144,15 @@ const resolvers: AmselResolvers = {
     ): Promise<Privilege | null> => {
       return context.dataSources.genericApi.addPrivilege(args.appId, args.input);
     },
+
+    updatePrivilege: async (
+      _,
+      args: { privilegeId: string; input: UpdatePrivilegeInput },
+      context: ApolloServerContext,
+    ): Promise<Privilege | null> => {
+      return context.dataSources.genericApi.updatePrivilege(args.privilegeId, args.input);
+    },
+
     addPrivilegePool: async (
       _,
       args: { appId: string; input: AddPrivilegePoolInput },

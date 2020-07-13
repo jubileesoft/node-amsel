@@ -9,6 +9,7 @@ import {
   Privilege,
   PrivilegePool,
   AddPrivilegePoolInput,
+  UpdatePrivilegeInput,
 } from '../graphql/types';
 
 export default interface Storage {
@@ -25,6 +26,7 @@ export default interface Storage {
   addApp(input: AddAppInput): Promise<any | null>;
   createAppApiKey1(appId: string): Promise<string | null>;
   addPrivilege(appId: string, input: AddPrivilegeInput): Promise<any | null>;
+  updatePrivilege(privilegeId: string, input: UpdatePrivilegeInput): Promise<any | null>;
   addPrivilegePool(appId: string, input: AddPrivilegePoolInput): Promise<any | null>;
 
   mapDocs(collection: Collection, docs: any[]): any[] | null;

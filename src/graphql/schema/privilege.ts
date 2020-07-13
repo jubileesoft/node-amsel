@@ -16,12 +16,19 @@ const typeDefs = gql`
     tags: [String]
   }
 
+  input UpdatePrivilegeInput {
+    name: String
+    short: String
+    tags: [String]
+  }
+
   extend type Query {
     getPrivileges(appId: String): [Privilege]
   }
 
   extend type Mutation {
     addPrivilege(appId: String!, input: AddPrivilegeInput!): Privilege
+    updatePrivilege(privilegeId: String!, input: UpdatePrivilegeInput!): Privilege
   }
 `;
 
