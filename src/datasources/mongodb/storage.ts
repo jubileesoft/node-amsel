@@ -58,6 +58,32 @@ export default class MongoDbStorage implements Storage {
     }
   }
 
+  public async deleteDocument(collection: Collection, id: string): Promise<boolean> {
+    const col = collectionMap.get(collection);
+    if (!col) {
+      return false;
+    }
+
+    let client: mongo.MongoClient | undefined;
+    try {
+      client = await this.getClient();
+
+      const db = client.db(this.config.database);
+
+      const filter = {
+        _id: new mongo.ObjectID(id),
+      };
+
+      await db.collection(col).deleteOne(filter);
+
+      return true;
+    } catch (error) {
+      return false;
+    } finally {
+      client?.close();
+    }
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async getDocument(collection: Collection, filter: any): Promise<any | null> {
     const col = collectionMap.get(collection);
@@ -410,6 +436,7 @@ export default class MongoDbStorage implements Storage {
         // eslint-disable-next-line @typescript-eslint/camelcase
         app_id: appDoc._id,
         name: input.name,
+        order: Date.now().toString(),
         short: input.short,
         tags: input.tags,
       };
@@ -477,6 +504,70 @@ export default class MongoDbStorage implements Storage {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public async orderUpPrivilege(privilegeId: string): Promise<any[] | null> {
+    const privilegesCollection = collectionMap.get(Collection.privileges);
+
+    if (!privilegesCollection) {
+      return null;
+    }
+
+    let client: mongo.MongoClient | undefined;
+    try {
+      client = await this.getClient();
+      const db = client.db(this.config.database);
+      const privilegeDoc: PrivilegeDoc | null = await db
+        .collection(privilegesCollection)
+        .findOne({ _id: new mongo.ObjectID(privilegeId) });
+
+      if (!privilegeDoc) {
+        return null;
+      }
+
+      const filter = {
+        // eslint-disable-next-line @typescript-eslint/camelcase
+        app_id: privilegeDoc.app_id,
+        order: { $lt: privilegeDoc.order },
+      };
+
+      const upPrivilegeDocs: PrivilegeDoc[] | null = await db
+        .collection(privilegesCollection)
+        .find(filter)
+        .sort({ order: -1 })
+        .limit(1)
+        .toArray();
+
+      if (!Array.isArray(upPrivilegeDocs) || upPrivilegeDocs.length === 0) {
+        return null;
+      }
+
+      const upPrivilegeDoc = upPrivilegeDocs[0];
+
+      // Now that we have the two privileges: do the swapping
+
+      const lowerOrder = upPrivilegeDoc.order;
+      const upperOrder = privilegeDoc.order;
+
+      // Update privilege (will become lower order privilege)
+      const filter2 = { _id: privilegeDoc._id };
+      const updateQuery2 = { $set: { order: lowerOrder } };
+      await db.collection(privilegesCollection).updateOne(filter2, updateQuery2);
+      privilegeDoc.order = lowerOrder;
+
+      // Update previous upper privilege (will become lower privilege)
+      const filter3 = { _id: upPrivilegeDoc._id };
+      const updateQuery3 = { $set: { order: upperOrder } };
+      await db.collection(privilegesCollection).updateOne(filter3, updateQuery3);
+      upPrivilegeDoc.order = upperOrder;
+
+      return [privilegeDoc, upPrivilegeDoc];
+    } catch (error) {
+      return null;
+    } finally {
+      client?.close();
+    }
+  }
+
   // #endregion Interface Methods
 
   // #region Private Methods
@@ -509,6 +600,7 @@ export default class MongoDbStorage implements Storage {
     return {
       id: doc._id.toString(),
       name: doc.name,
+      order: doc.order,
       short: doc.short,
       tags: doc.tags,
     };

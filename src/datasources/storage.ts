@@ -14,6 +14,7 @@ import {
 
 export default interface Storage {
   getDocuments(collection: Collection, filter?: any): Promise<any[] | null>;
+  deleteDocument(collection: Collection, id: string): Promise<boolean>;
   getDocument(collection: Collection, filter: any): Promise<any | null>;
   getPrivileges(appId?: string): Promise<any[] | null>;
   getAppUsers(appId: string): Promise<any[] | null>;
@@ -27,6 +28,8 @@ export default interface Storage {
   createAppApiKey1(appId: string): Promise<string | null>;
   addPrivilege(appId: string, input: AddPrivilegeInput): Promise<any | null>;
   updatePrivilege(privilegeId: string, input: UpdatePrivilegeInput): Promise<any | null>;
+  orderUpPrivilege(privilegeId: string): Promise<any[] | null>;
+  orderDownPrivilege(privilegeId: string): Promise<any[] | null>;
   addPrivilegePool(appId: string, input: AddPrivilegePoolInput): Promise<any | null>;
 
   mapDocs(collection: Collection, docs: any[]): any[] | null;

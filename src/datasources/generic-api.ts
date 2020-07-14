@@ -39,6 +39,10 @@ export default class GenericApi extends DataSource {
     return this.storage.mapDocs(collection, docs);
   }
 
+  public async deleteFromCollection(collection: Collection, id: string): Promise<boolean> {
+    return this.storage.deleteDocument(collection, id);
+  }
+
   public async getPrivileges(appId?: string): Promise<Privilege[] | null> {
     const docs = await this.storage.getPrivileges(appId);
     if (!docs) {
@@ -122,6 +126,22 @@ export default class GenericApi extends DataSource {
       return null;
     }
     return this.storage.mapPrivilegeDoc(doc);
+  }
+
+  public async orderUpPrivilege(privilegeId: string): Promise<Privilege[] | null> {
+    const docs = await this.storage.orderUpPrivilege(privilegeId);
+    if (!docs) {
+      return null;
+    }
+    return this.storage.mapPrivilegeDocs(docs);
+  }
+
+  public async orderDownPrivilege(privilegeId: string): Promise<Privilege[] | null> {
+    const docs = await this.storage.orderDownPrivilege(privilegeId);
+    if (!docs) {
+      return null;
+    }
+    return this.storage.mapPrivilegeDocs(docs);
   }
 
   public async addPrivilegePool(appId: string, input: AddPrivilegePoolInput): Promise<PrivilegePool | null> {

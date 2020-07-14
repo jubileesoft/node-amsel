@@ -37,6 +37,17 @@ interface AmselResolvers extends IResolvers {
       args: { privilegeId: string; input: UpdatePrivilegeInput },
       context: ApolloServerContext,
     ): Promise<Privilege | null>;
+    deletePrivilege(notUsed: unknown, args: { privilegeId: string }, context: ApolloServerContext): Promise<boolean>;
+    orderUpPrivilege(
+      notUsed: unknown,
+      args: { privilegeId: string },
+      context: ApolloServerContext,
+    ): Promise<Privilege[] | null>;
+    orderDownPrivilege(
+      notUsed: unknown,
+      args: { privilegeId: string },
+      context: ApolloServerContext,
+    ): Promise<Privilege[] | null>;
     addPrivilegePool(
       notUsed: unknown,
       args: { appId: string; input: AddPrivilegePoolInput },
@@ -89,7 +100,19 @@ const resolvers: AmselResolvers = {
 
     getPrivileges: async (_, args: { appId?: string }, context: ApolloServerContext): Promise<Privilege[] | null> => {
       const privileges: Privilege[] | null = await context.dataSources.genericApi.getPrivileges(args.appId);
-      return privileges;
+      if (!privileges) {
+        return null;
+      }
+      return privileges.sort((x: Privilege, y: Privilege) => {
+        if (x.order < y.order) {
+          return -1;
+        }
+
+        if (x.order > y.order) {
+          return 1;
+        }
+        return 0;
+      });
     },
     getAllPrivilegePools: async (_, __, context: ApolloServerContext): Promise<PrivilegePool[] | null> => {
       const privilegePools: PrivilegePool[] | null = await context.dataSources.genericApi.getCollection(
@@ -151,6 +174,26 @@ const resolvers: AmselResolvers = {
       context: ApolloServerContext,
     ): Promise<Privilege | null> => {
       return context.dataSources.genericApi.updatePrivilege(args.privilegeId, args.input);
+    },
+
+    deletePrivilege: async (_, args: { privilegeId: string }, context: ApolloServerContext): Promise<boolean> => {
+      return context.dataSources.genericApi.deleteFromCollection(Collection.privileges, args.privilegeId);
+    },
+
+    orderUpPrivilege: async (
+      _,
+      args: { privilegeId: string },
+      context: ApolloServerContext,
+    ): Promise<Privilege[] | null> => {
+      return context.dataSources.genericApi.orderUpPrivilege(args.privilegeId);
+    },
+
+    orderDownPrivilege: async (
+      _,
+      args: { privilegeId: string },
+      context: ApolloServerContext,
+    ): Promise<Privilege[] | null> => {
+      //
     },
 
     addPrivilegePool: async (

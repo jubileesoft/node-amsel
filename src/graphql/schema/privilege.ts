@@ -6,6 +6,7 @@ const typeDefs = gql`
     id: ID!
     app: App!
     name: String!
+    order: String!
     short: String
     tags: [String]
   }
@@ -29,6 +30,9 @@ const typeDefs = gql`
   extend type Mutation {
     addPrivilege(appId: String!, input: AddPrivilegeInput!): Privilege
     updatePrivilege(privilegeId: String!, input: UpdatePrivilegeInput!): Privilege
+    deletePrivilege(privilegeId: String!): Boolean
+    orderUpPrivilege(privilegeId: String!): [Privilege]
+    orderDownPrivilege(privilegeId: String!): [Privilege]
   }
 `;
 
