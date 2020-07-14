@@ -568,6 +568,70 @@ export default class MongoDbStorage implements Storage {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public async orderDownPrivilege(privilegeId: string): Promise<any[] | null> {
+    const privilegesCollection = collectionMap.get(Collection.privileges);
+
+    if (!privilegesCollection) {
+      return null;
+    }
+
+    let client: mongo.MongoClient | undefined;
+    try {
+      client = await this.getClient();
+      const db = client.db(this.config.database);
+      const privilegeDoc: PrivilegeDoc | null = await db
+        .collection(privilegesCollection)
+        .findOne({ _id: new mongo.ObjectID(privilegeId) });
+
+      if (!privilegeDoc) {
+        return null;
+      }
+
+      const filter = {
+        // eslint-disable-next-line @typescript-eslint/camelcase
+        app_id: privilegeDoc.app_id,
+        order: { $gt: privilegeDoc.order },
+      };
+
+      const downPrivilegeDocs: PrivilegeDoc[] | null = await db
+        .collection(privilegesCollection)
+        .find(filter)
+        .sort({ order: 1 })
+        .limit(1)
+        .toArray();
+
+      if (!Array.isArray(downPrivilegeDocs) || downPrivilegeDocs.length === 0) {
+        return null;
+      }
+
+      const downPrivilegeDoc = downPrivilegeDocs[0];
+
+      // Now that we have the two privileges: do the swapping
+
+      const lowerOrder = privilegeDoc.order;
+      const upperOrder = downPrivilegeDoc.order;
+
+      // Update privilege (will become upper order privilege)
+      const filter2 = { _id: privilegeDoc._id };
+      const updateQuery2 = { $set: { order: upperOrder } };
+      await db.collection(privilegesCollection).updateOne(filter2, updateQuery2);
+      privilegeDoc.order = upperOrder;
+
+      // Update previous upper privilege (will become lower order privilege)
+      const filter3 = { _id: downPrivilegeDoc._id };
+      const updateQuery3 = { $set: { order: lowerOrder } };
+      await db.collection(privilegesCollection).updateOne(filter3, updateQuery3);
+      downPrivilegeDoc.order = lowerOrder;
+
+      return [downPrivilegeDoc, privilegeDoc];
+    } catch (error) {
+      return null;
+    } finally {
+      client?.close();
+    }
+  }
+
   // #endregion Interface Methods
 
   // #region Private Methods

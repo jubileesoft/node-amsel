@@ -193,7 +193,7 @@ const resolvers: AmselResolvers = {
       args: { privilegeId: string },
       context: ApolloServerContext,
     ): Promise<Privilege[] | null> => {
-      //
+      return context.dataSources.genericApi.orderDownPrivilege(args.privilegeId);
     },
 
     addPrivilegePool: async (
