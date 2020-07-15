@@ -13,6 +13,8 @@ import {
 import Storage from '../storage';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcrypt';
+import { GetPrivilegePools } from './storage/privilege-pools';
+import MongoDbCache from './cache';
 
 const collectionMap = new Map<Collection, string>();
 collectionMap.set(Collection.apps, 'apps');
@@ -21,7 +23,9 @@ collectionMap.set(Collection.privileges, 'privileges');
 collectionMap.set(Collection.privilegepools, 'privilegepools');
 
 export default class MongoDbStorage implements Storage {
-  private config = MongoDBConfig;
+  public config = MongoDBConfig;
+  public collectionMap = collectionMap;
+  public static cache = new MongoDbCache();
 
   // #region Interface Methods
 
@@ -274,6 +278,8 @@ export default class MongoDbStorage implements Storage {
     return this.getDocument(Collection.apps, { _id: privilegeDoc.app_id });
   }
 
+  public getPrivilegePools = GetPrivilegePools;
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async getAppFromPrivilegePool(privilegePoolId: string): Promise<any | null> {
     const privilegePoolDoc: PrivilegePoolDoc = await this.getDocument(Collection.privilegepools, {
@@ -490,6 +496,7 @@ export default class MongoDbStorage implements Storage {
         // eslint-disable-next-line @typescript-eslint/camelcase
         app_id: appDoc._id,
         name: input.name,
+        order: Date.now().toString(),
         short: input.short,
         tags: input.tags,
         // eslint-disable-next-line @typescript-eslint/camelcase
@@ -636,7 +643,7 @@ export default class MongoDbStorage implements Storage {
 
   // #region Private Methods
 
-  private async getClient(): Promise<mongo.MongoClient> {
+  public async getClient(): Promise<mongo.MongoClient> {
     return mongo.MongoClient.connect(this.config.url, {
       useUnifiedTopology: true,
     });
@@ -674,6 +681,7 @@ export default class MongoDbStorage implements Storage {
     return {
       id: doc._id.toString(),
       name: doc.name,
+      order: doc.order,
       short: doc.short,
       tags: doc.tags,
     };

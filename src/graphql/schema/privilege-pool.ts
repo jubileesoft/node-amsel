@@ -6,13 +6,14 @@ const typeDefs = gql`
     id: ID!
     app: App!
     name: String!
+    order: String!
     short: String
     tags: [String]
     privileges: [Privilege!]!
   }
 
   extend type Query {
-    getAllPrivilegePools: [PrivilegePool]
+    getPrivilegePools(appId: String!): [PrivilegePool]
   }
 
   input AddPrivilegePoolInput {

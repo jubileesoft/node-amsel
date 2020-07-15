@@ -114,10 +114,12 @@ const resolvers: AmselResolvers = {
         return 0;
       });
     },
-    getAllPrivilegePools: async (_, __, context: ApolloServerContext): Promise<PrivilegePool[] | null> => {
-      const privilegePools: PrivilegePool[] | null = await context.dataSources.genericApi.getCollection(
-        Collection.privilegepools,
-      );
+    getPrivilegePools: async (
+      _,
+      args: { appId: string },
+      context: ApolloServerContext,
+    ): Promise<PrivilegePool[] | null> => {
+      const privilegePools: PrivilegePool[] | null = await context.dataSources.genericApi.getPrivilegePools(args.appId);
       return privilegePools;
     },
   },

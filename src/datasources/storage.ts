@@ -20,6 +20,7 @@ export default interface Storage {
   getAppUsers(appId: string): Promise<any[] | null>;
   getAppFromAppUser(appUserId: string): Promise<any | null>;
   getAppFromPrivilege(privilegeId: string): Promise<any | null>;
+  getPrivilegePools(appId: string): Promise<any[] | null>;
   getAppFromPrivilegePool(privilegePoolId: string): Promise<any | null>;
   getPrivilegesFromPrivilegePool(privilegePoolId: string): Promise<any[] | null>;
 

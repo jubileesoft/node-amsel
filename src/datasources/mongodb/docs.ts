@@ -29,6 +29,7 @@ export interface PrivilegePoolDoc {
   _id: mongo.ObjectID;
   app_id: mongo.ObjectID;
   name: string;
+  order: string;
   short?: string;
   tags?: string[];
   privilege_ids?: mongo.ObjectID[];

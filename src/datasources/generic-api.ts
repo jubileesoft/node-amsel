@@ -76,6 +76,14 @@ export default class GenericApi extends DataSource {
     return this.storage.mapAppDoc(doc);
   }
 
+  public async getPrivilegePools(appId: string): Promise<PrivilegePool[] | null> {
+    const docs = await this.storage.getPrivilegePools(appId);
+    if (!docs) {
+      return null;
+    }
+    return this.storage.mapPrivilegePoolDocs(docs);
+  }
+
   public async getAppFromPrivilegePool(privilegePoolId: string): Promise<App | null> {
     const doc = await this.storage.getAppFromPrivilegePool(privilegePoolId);
     if (!doc) {
