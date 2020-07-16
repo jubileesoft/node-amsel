@@ -1,11 +1,11 @@
 {
-  "name": "node-amsel",
+  "name": "greenlight-backend",
   "version": "0.0.1",
   "main": "dist/index.js",
   "scripts": {
     "test": "none",
     "clean": "run-script-os",
-    "clean:windows": "if exist dist rmdir dist /s",
+    "clean:windows": "if exist dist rmdir dist /s /q",
     "clean:nix": "rm -rf ./dist",
     "lint": "eslint src/**/*.{ts,js} --fix",
     "prebuild": "yarn run clean",
@@ -14,7 +14,7 @@
     "start-dev": "nodemon --config \"nodemon.json\"/"
   },
   "keywords": [],
-  "repository": "github:jubileesoft/node-amsel",
+  "repository": "github:jubileesoft/greenlight-backend",
   "author": "Christian Ellerbrock",
   "license": "MIT",
   "description": "",
